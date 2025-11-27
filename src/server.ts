@@ -1,56 +1,29 @@
 import http, { IncomingMessage, Server, ServerResponse } from "http"
 import config from "./config";
-
+import  { RouteHandler, routes } from "./helpers/routeHandler";
+import sendJson from "./helpers/sendJson";
+import "./routes"
 
 
 const server: Server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
     console.log('server is running.......')
-    // root route
-    if (req.url == '/' && req.method == "GET") {
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(
-            JSON.stringify({
-                message: "Hallo from node js with typescript",
-                path: req.url
-            })
-        )
-    }
 
-    // helth route
-    if (req.url == '/api' && req.method == "GET") {
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({
-            message: "Helth status ok",
-            path: req.url
-        }));
+    const method = req.method?.toUpperCase() || ''
+    const path = req.url || ''
 
-    }
+    const methodMap = routes.get(method)
+    const handler: RouteHandler | undefined = methodMap?.get(path)
+    if (handler) {
+        handler(req, res)
+    } else {
 
-    // 
-    if (req.url == "/api/user" && req.method === "POST") {
-        // const user = {
-        //     id: 828282,
-        //     name: "Nishat"
-        // }
-        // res.writeHead(200, { "content-type": "application/json" });
-        // res.end(JSON.stringify(user));
-
-        let body = '';
-        // listen for data chunk
-
-        req.on("data", chunk => {
-            body = body + chunk.toString()
-        })
-        req.on("end", () => {
-            try {
-                const parseBody = JSON.parse(body)
-                console.log(parseBody)
-                res.end(JSON.stringify(parseBody))
-            } catch (error:any) {
-                console.log(error?.message)
-            }
+        sendJson(res, 401, {
+            sucess: false,
+            message: "Route not found",
+            path,
         })
     }
+
 })
 
 
