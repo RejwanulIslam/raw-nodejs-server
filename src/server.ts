@@ -1,8 +1,11 @@
 import http, { IncomingMessage, Server, ServerResponse } from "http"
 import config from "./config";
-import  { RouteHandler, routes } from "./helpers/routeHandler";
+import { RouteHandler, routes } from "./helpers/routeHandler";
 import sendJson from "./helpers/sendJson";
 import "./routes"
+import findDaynamicRoute from "./helpers/dainamicRouteHandler";
+
+
 
 
 const server: Server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -15,7 +18,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     const handler: RouteHandler | undefined = methodMap?.get(path)
     if (handler) {
         handler(req, res)
-    } else {
+    }
+    else if (findDaynamicRoute(method, path)) {
+        const mach = findDaynamicRoute(method, path);
+        (req as any).params = mach?.params;
+        mach?.handler(req,res)
+    }
+    else {
 
         sendJson(res, 401, {
             sucess: false,
